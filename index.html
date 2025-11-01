@@ -40,7 +40,7 @@ input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; marg
 async function loadPosts() {
   const prefix = "/knowledge-hub-ai/";
   try {
-      const res = await fetch(prefix + "posts/index.json");
+      const res = await fetch("./posts/index.json");
       const files = await res.json();
 
       window.allPosts = files.map(f => {
@@ -71,7 +71,7 @@ function renderPosts(list) {
   list.forEach(p => {
       container.innerHTML += `
           <div class="card">
-              <a href="post.html?file=posts/${p.file}">${p.title}</a>
+              <a href="./post.html?file=posts/${p.file}">
               <small>${new Date(p.date).toLocaleDateString()}</small>
           </div>`;
   });
