@@ -1,0 +1,8 @@
+{
+  "daily_articles": 50,
+  "min_blocks": 6,
+  "max_blocks": 9,
+  "include_h2": true,
+  "include_h3": true,
+  "affiliate_placeholder": "{{AFFILIATE_LINK}}"
+}
