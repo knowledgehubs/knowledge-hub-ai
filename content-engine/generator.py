@@ -2,7 +2,7 @@ import os, random, datetime
 
 # Paths
 keywords_dir = "content-engine/keywords/"
-blocks_dir = "content-engine/blocks/"
+blocks_dir = "blocks/"
 posts_dir = "posts/"
 
 # Load blocks
