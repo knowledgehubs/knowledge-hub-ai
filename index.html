@@ -20,7 +20,7 @@
         header { background: #111; color: #fff; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; }
         section { padding: 20px; max-width: 900px; margin: auto; }
         a { text-decoration: none; color: #1a73e8; }
-        .post-card { padding: 12px; border-bottom: 1px solid #ddd; }
+        .post-card { padding: 12px; border-bottom: 1px solid #ddd; display:block; margin-bottom:10px; }
         .post-card:hover { background: #f7f7f7; }
         h2 { font-size: 18px; margin: 0 0 4px 0; }
     </style>
@@ -36,21 +36,28 @@
 
 <script>
 async function loadPosts() {
-    const postsList = document.getElementById("posts");
-    const response = await fetch("posts/");
-    const text = await response.text();
+    try {
+        const repo = "knowledgehubs/knowledge-hub-ai";  // ✅ ضع اسم الريبو هنا إن اتغير لاحقًا
+        const response = await fetch(`https://api.github.com/repos/${repo}/contents/posts`);
+        const files = await response.json();
 
-    // استخراج أسماء ملفات .md
-    const files = [...text.matchAll(/href="([^"]+\.md)"/g)].map(m => m[1]);
+        const postsContainer = document.getElementById("posts");
 
-    files.forEach(file => {
-        const link = document.createElement("a");
-        link.href = `post.html?file=posts/${file}`;
-        link.textContent = file.replace(".md", "").replace(/-/g, " ");
-        link.style.display = "block";
-        link.style.marginBottom = "10px";
-        postsList.appendChild(link);
-    });
+        files
+            .filter(f => f.name.endsWith(".md"))
+            .slice(-50) // ✅ عرض آخر 50 مقال فقط
+            .reverse() // ✅ الأحدث أولاً
+            .forEach(f => {
+                const link = document.createElement("a");
+                link.href = `post.html?file=${encodeURIComponent(f.download_url)}`;
+                link.className = "post-card";
+                link.textContent = f.name.replace(".md","").replace(/-/g," ");
+                postsContainer.appendChild(link);
+            });
+    } catch (e) {
+        console.error("Error loading posts", e);
+        document.getElementById("posts").innerHTML = "⚠️ Unable to load posts.";
+    }
 }
 
 loadPosts();
