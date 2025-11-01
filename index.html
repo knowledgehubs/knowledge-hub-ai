@@ -34,18 +34,31 @@ input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; marg
 
 <script>
 async function loadPosts() {
-    const res = await fetch("posts/");
-    const text = await res.text();
+    let res, text;
+    try {
+        res = await fetch("./posts/");
+        text = await res.text();
+    } catch(e) {
+        console.error(e);
+        document.getElementById("empty").innerText = "Error loading posts.";
+        return;
+    }
 
     // Extract md filenames
     const files = [...text.matchAll(/href="([^"]+\.md)"/g)].map(m => m[1]);
+
+    // If GitHub blocked directory listing → fallback to JSON later
+    if(files.length === 0){
+        document.getElementById("empty").style.display = "block";
+        return;
+    }
 
     window.allPosts = files.map(f => {
         const name = f.replace(".md", "").replace(/-/g, " ");
         const date = f.slice(0,10);
         const title = name.replace(/^\d{4} \d{2} \d{2} /, "");
         return { file:f, title:title, date:date };
-    }).reverse(); // latest first
+    }).reverse();
 
     renderPosts(window.allPosts);
 }
