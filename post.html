@@ -27,6 +27,7 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
 @media (max-width:640px){.container{padding:14px}.title{font-size:22px}}
 </style>
 </head>
+
 <body>
 <div class="container">
   <div class="header">
@@ -42,6 +43,7 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
     <div class="meta" id="metaRow">
       <div class="pill" id="dateP">—</div>
       <div class="pill" id="readTime">—</div>
+      <div id="tags" style="color:var(--muted);font-size:13px"></div>
     </div>
 
     <div id="content" class="content">…</div>
@@ -51,40 +53,36 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
         <div style="font-weight:700" id="ctaTitle">Special offer</div>
         <div style="color:var(--muted);font-size:14px" id="ctaDesc">Click to see details.</div>
       </div>
-      <div>
-        <a id="ctaLink" class="ctaBtn" href="#" target="_blank" rel="noopener">Get it</a>
-      </div>
+      <a id="ctaLink" class="ctaBtn" href="#" target="_blank" rel="noopener">Get it</a>
     </div>
+
+    <hr />
+    <div style="color:var(--muted);font-size:14px">You may also like</div>
+    <div id="suggestions" class="suggest"></div>
   </article>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-function qs(sel){return document.querySelector(sel)}
-function calcReadTime(text){ const words=(text||'').trim().split(/\s+/).length; return Math.max(1, Math.round(words/200)) }
+function qs(s){return document.querySelector(s)}
+function calcRead(t){const w=(t||"").trim().split(/\s+/).length;return Math.max(1,Math.round(w/200));}
 
-(async function(){
-  const params=new URLSearchParams(window.location.search)
-  const file=params.get('file')
+(async()=>{
+  const p=new URLSearchParams(location.search).get("file");
+  if(!p){qs("#post-title").textContent="Missing file";return;}
 
-  if(!file){qs('#post-title').textContent='No article selected';return;}
+  const r=await fetch(p);
+  const md=await r.text();
 
-  const res=await fetch(file)
-  const md=await res.text()
+  qs("#content").innerHTML=marked.parse(md);
+  const title=md.match(/^#\s+(.+)$/m)?.[1] ?? p.split("/").pop().replace(/\.md$/,"");
+  qs("#post-title").textContent=title;
 
-  qs('#content').innerHTML=marked.parse(md)
-
-  const titleMatch=md.match(/^#\s+(.+)$/m)
-  const title=titleMatch?titleMatch[1].trim():file.replace(/\.md$/,'').replace(/-/g,' ')
-  qs('#post-title').textContent=title
-
-  const fname=file.split("/").pop()
-  const date=fname.slice(0,10)
-  qs('#dateP').textContent=new Date(date).toLocaleDateString()
-
-  const plain=md.replace(/^#.*$/mg,'').replace(/```[\s\S]*?```/g,'')
-  qs('#readTime').textContent=calcReadTime(plain)+' min read'
+  const fname=p.split("/").pop();
+  qs("#dateP").textContent=new Date(fname.slice(0,10)).toLocaleDateString();
+  qs("#readTime").textContent=calcRead(md)+" min read";
 })();
 </script>
+
 </body>
 </html>
