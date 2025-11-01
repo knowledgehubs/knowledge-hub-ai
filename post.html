@@ -6,9 +6,8 @@
 <title>Article — Knowledge Hub</title>
 <meta name="description" content="Article from Knowledge Hub" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
-
 <style>
-:root{--accent:#1a73e8;--muted:#6b7280;--bg:#fff}
+:root{--accent:#1a73e8;--muted:#6b7280}
 *{box-sizing:border-box}
 body{font-family:"Inter",system-ui,Arial;background:#fff;margin:0;color:#0f1724}
 .container{max-width:880px;margin:26px auto;padding:20px}
@@ -17,24 +16,20 @@ body{font-family:"Inter",system-ui,Arial;background:#fff;margin:0;color:#0f1724}
 .title{margin:8px 0 14px;font-family:"Merriweather",serif;font-size:28px}
 .meta{color:var(--muted);font-size:13px;margin-bottom:12px;display:flex;gap:12px;align-items:center}
 .content{line-height:1.8;font-size:17px;color:#0b1220}
-hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
+.ctaBox{margin-top:18px;padding:16px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #eef5ff;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.ctaBtn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700}
 .suggest{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
 .suggest a{display:block;padding:8px 10px;border-radius:10px;background:#fbfdff;border:1px solid #eef5ff;color:var(--accent);text-decoration:none;font-weight:600}
-.ctaBox{margin-top:18px;padding:16px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #eef5ff;display:flex;gap:12px;align-items:center;justify-content:space-between}
-.ctaBox .left{max-width:70%}
-.ctaBtn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700}
-.meta .pill{background:#f1f5f9;padding:6px 8px;border-radius:8px;font-size:13px;color:#111}
 @media (max-width:640px){.container{padding:14px}.title{font-size:22px}}
 </style>
 </head>
-
 <body>
 <div class="container">
   <div class="header">
     <div class="logo">KH</div>
     <div>
       <div style="font-weight:700">Knowledge Hub</div>
-      <div style="font-size:13px;color:var(--muted)">Quick, practical, tested</div>
+      <div style="font-size:13px;color:var(--muted)">Practical. Tested. Fast.</div>
     </div>
   </div>
 
@@ -53,7 +48,9 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
         <div style="font-weight:700" id="ctaTitle">Special offer</div>
         <div style="color:var(--muted);font-size:14px" id="ctaDesc">Click to see details.</div>
       </div>
-      <a id="ctaLink" class="ctaBtn" href="#" target="_blank" rel="noopener">Get it</a>
+      <div>
+        <a id="ctaLink" class="ctaBtn" href="#" target="_blank" rel="noopener sponsored">Get it</a>
+      </div>
     </div>
 
     <hr />
@@ -64,25 +61,88 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-function qs(s){return document.querySelector(s)}
-function calcRead(t){const w=(t||"").trim().split(/\s+/).length;return Math.max(1,Math.round(w/200));}
+function qs(selector){return document.querySelector(selector)}
+function calcReadTime(text){ const words = (text||'').trim().split(/\s+/).length; return Math.max(1, Math.round(words / 200)); }
 
-(async()=>{
-  const p=new URLSearchParams(location.search).get("file");
-  if(!p){qs("#post-title").textContent="Missing file";return;}
+(async function(){
+  const params = new URLSearchParams(window.location.search);
+  const fileParam = params.get('file');
+  if(!fileParam){ qs('#post-title').textContent = 'No file specified'; return; }
+  try{
+    const res = await fetch(fileParam);
+    if(!res.ok) { qs('#post-title').textContent='Post not found'; return; }
+    const md = await res.text();
 
-  const r=await fetch(p);
-  const md=await r.text();
+    // Render content
+    qs('#content').innerHTML = marked.parse(md);
 
-  qs("#content").innerHTML=marked.parse(md);
-  const title=md.match(/^#\s+(.+)$/m)?.[1] ?? p.split("/").pop().replace(/\.md$/,"");
-  qs("#post-title").textContent=title;
+    // Title (from first heading or filename)
+    const titleMatch = md.match(/^#\s+(.+)$/m);
+    const title = titleMatch ? titleMatch[1].trim() : fileParam.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
+    qs('#post-title').textContent = title;
 
-  const fname=p.split("/").pop();
-  qs("#dateP").textContent=new Date(fname.slice(0,10)).toLocaleDateString();
-  qs("#readTime").textContent=calcRead(md)+" min read";
+    // Date
+    const fname = fileParam.split('/').pop();
+    const datePart = fname.slice(0,10);
+    qs('#dateP').textContent = new Date(datePart).toLocaleDateString();
+    const plain = md.replace(/^#.*$/mg,'').replace(/```[\s\S]*?```/g,'');
+    qs('#readTime').textContent = calcReadTime(plain) + ' min read';
+
+    // JSON-LD structured data injection
+    const pageUrl = window.location.origin + window.location.pathname + '?file=' + encodeURIComponent(fileParam);
+    const jsonLd = {
+      "@context":"https://schema.org",
+      "@type":"Article",
+      "headline": title,
+      "datePublished": datePart,
+      "author": { "@type":"Person", "name":"Knowledge Hub" },
+      "publisher": { "@type":"Organization", "name":"Knowledge Hub", "logo": { "@type":"ImageObject", "url": window.location.origin + '/favicon.ico' } },
+      "mainEntityOfPage": pageUrl
+    };
+    const s = document.createElement('script'); s.type='application/ld+json'; s.text = JSON.stringify(jsonLd); document.head.appendChild(s);
+
+    // Affiliate injection: pattern {AFFILIATE:KEY}
+    const affMatch = md.match(/\{AFFILIATE\:([^\}\n]+)\}/i);
+    if(affMatch){
+      const offerKey = affMatch[1].trim();
+      // fetch redirects map
+      try{
+        const rr = await fetch('/data/redirects.json'); // create this file (see README below)
+        if(rr.ok){
+          const map = await rr.json();
+          const link = map[offerKey] || map['_default'] || null;
+          if(link){
+            qs('#ctaTitle').textContent = 'Recommended — ' + offerKey;
+            qs('#ctaDesc').textContent = 'Top pick based on article topic.';
+            qs('#ctaLink').href = link;
+            qs('#ctaZone').style.display = 'flex';
+          }
+        }
+      }catch(e){ console.warn('redirects load fail', e); }
+    }
+
+    // Suggestions: simple related by first word
+    const listing = await (await fetch('posts/')).text();
+    const files = [...listing.matchAll(/href="([^"]+\.md)"/g)].map(m=>m[1]);
+    const current = fileParam.split('/').pop();
+    const firstWord = title.split(' ')[0].toLowerCase();
+    const related = files.filter(f=>{
+      const t = f.replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
+      return f!==current && t.toLowerCase().includes(firstWord);
+    }).slice(0,6);
+    qs('#suggestions').innerHTML = related.map(s=>{
+      const title = s.replace(/^\d{4}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
+      return `<a href="post.html?file=posts/${encodeURIComponent(s)}">${title}</a>`;
+    }).join('');
+
+    // canonical meta (client-side)
+    const linkEl = document.createElement('link'); linkEl.rel='canonical'; linkEl.href = pageUrl; document.head.appendChild(linkEl);
+
+  }catch(e){
+    console.error(e);
+    qs('#post-title').textContent = 'Error loading post';
+  }
 })();
 </script>
-
 </body>
 </html>
