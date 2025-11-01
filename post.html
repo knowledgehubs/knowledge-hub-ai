@@ -4,21 +4,78 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Article</title>
+
 <style>
-body { font-family: Georgia, serif; margin: 0; padding: 0; line-height: 1.6; background: #ffffff; color: #222; }
-header { background: #111; color: #fff; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; }
-article { max-width: 800px; margin: auto; padding: 20px; }
-h1, h2, h3 { font-weight: bold; margin-top: 24px; }
-a { color: #1a73e8; text-decoration: none; }
+body { 
+    font-family: "Georgia", serif; 
+    margin: 0; 
+    padding: 0; 
+    line-height: 1.75; 
+    background: #fafafa; 
+    color: #222; 
+}
+header { 
+    background: #111; 
+    color: #fff; 
+    padding: 20px; 
+    text-align: center; 
+    font-size: 22px; 
+    font-weight: bold; 
+}
+.container {
+    max-width: 850px;
+    margin: auto;
+    padding: 30px 20px;
+    background: #fff;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.05);
+    margin-top: 25px;
+}
+h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+h2 { font-size: 26px; margin-top: 30px; font-weight: bold; border-left: 4px solid #1a73e8; padding-left: 10px; }
+h3 { font-size: 20px; margin-top: 24px; font-weight: bold; }
+p { margin: 14px 0; }
+ul { padding-left: 22px; }
+blockquote {
+    border-left: 4px solid #1a73e8;
+    margin: 20px 0;
+    padding: 10px 15px;
+    background: #f4f8ff;
+    font-style: italic;
+}
 code { background: #eee; padding: 2px 5px; border-radius: 4px; }
+a { color: #1a73e8; text-decoration: none; }
+.back-link { display: block; margin-top: 30px; font-size: 16px; color: #000; }
+
+.meta-box {
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+.separator {
+    height: 1px;
+    background: #ddd;
+    margin: 22px 0;
+}
 </style>
 </head>
+
 <body>
 <header>Knowledge Hub 📘</header>
-<article id="content">Loading...</article>
+
+<div class="container">
+    <div class="meta-box" id="post-meta"></div>
+    <h1 id="post-title">Loading...</h1>
+    <div id="post-content">Loading article...</div>
+    <a class="back-link" href="index.html">← Back to Home</a>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+function readingTime(text) {
+    const words = text.split(/\s+/).length;
+    return Math.ceil(words / 200); // avg reading speed
+}
+
 async function loadPost() {
     const params = new URLSearchParams(window.location.search);
     const file = params.get("file");
@@ -26,8 +83,14 @@ async function loadPost() {
     const response = await fetch(file);
     const text = await response.text();
 
-    document.getElementById("content").innerHTML = marked.parse(text);
+    const title = text.split("\n")[0].replace("#", "").trim();
+    const minutes = readingTime(text);
+
+    document.getElementById("post-title").innerText = title;
+    document.getElementById("post-meta").innerText = `⏱️ ${minutes} min read`;
+    document.getElementById("post-content").innerHTML = marked.parse(text);
 }
+
 loadPost();
 </script>
 
