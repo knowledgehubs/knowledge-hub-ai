@@ -20,11 +20,9 @@ body{font-family:"Inter",system-ui,Arial;background:#fff;margin:0;color:#0f1724}
 hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
 .suggest{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
 .suggest a{display:block;padding:8px 10px;border-radius:10px;background:#fbfdff;border:1px solid #eef5ff;color:var(--accent);text-decoration:none;font-weight:600}
-/* CTA box */
 .ctaBox{margin-top:18px;padding:16px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #eef5ff;display:flex;gap:12px;align-items:center;justify-content:space-between}
 .ctaBox .left{max-width:70%}
 .ctaBtn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700}
-/* reading UI */
 .meta .pill{background:#f1f5f9;padding:6px 8px;border-radius:8px;font-size:13px;color:#111}
 @media (max-width:640px){.container{padding:14px}.title{font-size:22px}}
 </style>
@@ -44,12 +42,10 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
     <div class="meta" id="metaRow">
       <div class="pill" id="dateP">—</div>
       <div class="pill" id="readTime">—</div>
-      <div id="tags" style="color:var(--muted);font-size:13px"></div>
     </div>
 
     <div id="content" class="content">…</div>
 
-    <!-- CTA Zone (affiliate ready) -->
     <div id="ctaZone" class="ctaBox" style="display:none">
       <div class="left">
         <div style="font-weight:700" id="ctaTitle">Special offer</div>
@@ -59,71 +55,35 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
         <a id="ctaLink" class="ctaBtn" href="#" target="_blank" rel="noopener">Get it</a>
       </div>
     </div>
-
-    <hr />
-    <div style="color:var(--muted);font-size:14px">You may also like</div>
-    <div id="suggestions" class="suggest"></div>
   </article>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-function qs(s){return document.querySelector(s)}
-function calcReadTime(text){ const words = (text||'').trim().split(/\s+/).length; return Math.max(1, Math.round(words / 200)); }
+function qs(sel){return document.querySelector(sel)}
+function calcReadTime(text){ const words=(text||'').trim().split(/\s+/).length; return Math.max(1, Math.round(words/200)) }
 
 (async function(){
-  const params = new URLSearchParams(window.location.search);
-  const fileParam = params.get('file');
-  if(!fileParam){ qs('#post-title').textContent = 'No file specified'; return; }
+  const params=new URLSearchParams(window.location.search)
+  const file=params.get('file')
 
-  try{
-    const res = await fetch(fileParam);
-    if(!res.ok) { qs('#post-title').textContent='Post not found'; return; }
-    const md = await res.text();
-    qs('#content').innerHTML = marked.parse(md);
+  if(!file){qs('#post-title').textContent='No article selected';return;}
 
-    const titleMatch = md.match(/^#\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1].trim() : 
-      fileParam.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
-    qs('#post-title').textContent = title;
+  const res=await fetch(file)
+  const md=await res.text()
 
-    const fname = fileParam.split('/').pop();
-    const datePart = fname.slice(0,10);
-    qs('#dateP').textContent = new Date(datePart).toLocaleDateString();
+  qs('#content').innerHTML=marked.parse(md)
 
-    const plain = md.replace(/^#.*$/mg,'').replace(/```[\s\S]*?```/g,'');
-    qs('#readTime').textContent = calcReadTime(plain) + ' min read';
+  const titleMatch=md.match(/^#\s+(.+)$/m)
+  const title=titleMatch?titleMatch[1].trim():file.replace(/\.md$/,'').replace(/-/g,' ')
+  qs('#post-title').textContent=title
 
-    const affMatch = md.match(/\{AFFILIATE\:([^\}\n]+)\}/i);
-    if(affMatch){
-      const offerKey = affMatch[1].trim();
-      const demoLink = `https://example.com/offer/${encodeURIComponent(offerKey)}`;
-      qs('#ctaTitle').textContent = 'Recommended — ' + offerKey;
-      qs('#ctaDesc').textContent = 'Top pick based on article topic. Safe & tested.';
-      qs('#ctaLink').href = demoLink;
-      qs('#ctaZone').style.display = 'flex';
-    }
+  const fname=file.split("/").pop()
+  const date=fname.slice(0,10)
+  qs('#dateP').textContent=new Date(date).toLocaleDateString()
 
-    /* ✅ Load suggestions from sitemap.xml */
-    const sitemap = await (await fetch("sitemap.xml")).text();
-    const allPosts = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)]
-      .map(x => x[1])
-      .filter(link => link.includes("/posts/"))
-      .map(link => link.split("/").pop());
-
-    const suggestions = allPosts
-      .filter(f => f !== fname)
-      .slice(0,6);
-
-    qs("#suggestions").innerHTML = suggestions.map(s=>{
-      const t = s.replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
-      return `<a href="post.html?file=posts/${s}">${t}</a>`;
-    }).join('');
-
-  }catch(e){
-    console.error(e);
-    qs('#post-title').textContent = 'Error loading post';
-  }
+  const plain=md.replace(/^#.*$/mg,'').replace(/```[\s\S]*?```/g,'')
+  qs('#readTime').textContent=calcReadTime(plain)+' min read'
 })();
 </script>
 </body>
