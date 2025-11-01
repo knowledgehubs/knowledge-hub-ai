@@ -6,6 +6,7 @@
 <title>Article — Knowledge Hub</title>
 <meta name="description" content="Article from Knowledge Hub" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+
 <style>
 :root{--accent:#1a73e8;--muted:#6b7280}
 *{box-sizing:border-box}
@@ -65,78 +66,40 @@ function qs(selector){return document.querySelector(selector)}
 function calcReadTime(text){ const words = (text||'').trim().split(/\s+/).length; return Math.max(1, Math.round(words / 200)); }
 
 (async function(){
+  const prefix = "/knowledge-hub-ai/";
   const params = new URLSearchParams(window.location.search);
   const fileParam = params.get('file');
   if(!fileParam){ qs('#post-title').textContent = 'No file specified'; return; }
   try{
-    const res = await fetch(fileParam);
+    const res = await fetch(prefix + fileParam);
     if(!res.ok) { qs('#post-title').textContent='Post not found'; return; }
     const md = await res.text();
 
-    // Render content
     qs('#content').innerHTML = marked.parse(md);
 
-    // Title (from first heading or filename)
     const titleMatch = md.match(/^#\s+(.+)$/m);
     const title = titleMatch ? titleMatch[1].trim() : fileParam.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
     qs('#post-title').textContent = title;
 
-    // Date
     const fname = fileParam.split('/').pop();
     const datePart = fname.slice(0,10);
     qs('#dateP').textContent = new Date(datePart).toLocaleDateString();
     const plain = md.replace(/^#.*$/mg,'').replace(/```[\s\S]*?```/g,'');
     qs('#readTime').textContent = calcReadTime(plain) + ' min read';
 
-    // JSON-LD structured data injection
-    const pageUrl = window.location.origin + window.location.pathname + '?file=' + encodeURIComponent(fileParam);
-    const jsonLd = {
-      "@context":"https://schema.org",
-      "@type":"Article",
-      "headline": title,
-      "datePublished": datePart,
-      "author": { "@type":"Person", "name":"Knowledge Hub" },
-      "publisher": { "@type":"Organization", "name":"Knowledge Hub", "logo": { "@type":"ImageObject", "url": window.location.origin + '/favicon.ico' } },
-      "mainEntityOfPage": pageUrl
-    };
-    const s = document.createElement('script'); s.type='application/ld+json'; s.text = JSON.stringify(jsonLd); document.head.appendChild(s);
-
-    // Affiliate injection: pattern {AFFILIATE:KEY}
-    const affMatch = md.match(/\{AFFILIATE\:([^\}\n]+)\}/i);
-    if(affMatch){
-      const offerKey = affMatch[1].trim();
-      // fetch redirects map
-      try{
-        const rr = await fetch('/data/redirects.json'); // create this file (see README below)
-        if(rr.ok){
-          const map = await rr.json();
-          const link = map[offerKey] || map['_default'] || null;
-          if(link){
-            qs('#ctaTitle').textContent = 'Recommended — ' + offerKey;
-            qs('#ctaDesc').textContent = 'Top pick based on article topic.';
-            qs('#ctaLink').href = link;
-            qs('#ctaZone').style.display = 'flex';
-          }
-        }
-      }catch(e){ console.warn('redirects load fail', e); }
-    }
-
-    // Suggestions: simple related by first word
-    const listing = await (await fetch('posts/')).text();
+    const listing = await (await fetch(prefix + "posts/")).text();
     const files = [...listing.matchAll(/href="([^"]+\.md)"/g)].map(m=>m[1]);
-    const current = fileParam.split('/').pop();
+    const current = fname;
     const firstWord = title.split(' ')[0].toLowerCase();
     const related = files.filter(f=>{
-      const t = f.replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
+      const t = f.replace(/^\d{4}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
       return f!==current && t.toLowerCase().includes(firstWord);
     }).slice(0,6);
+
     qs('#suggestions').innerHTML = related.map(s=>{
       const title = s.replace(/^\d{4}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
       return `<a href="post.html?file=posts/${encodeURIComponent(s)}">${title}</a>`;
     }).join('');
-
-    // canonical meta (client-side)
-    const linkEl = document.createElement('link'); linkEl.rel='canonical'; linkEl.href = pageUrl; document.head.appendChild(linkEl);
 
   }catch(e){
     console.error(e);
