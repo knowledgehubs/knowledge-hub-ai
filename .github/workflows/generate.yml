@@ -1,13 +1,14 @@
-name: Generate Blog Posts
+name: Auto Generate Blog Posts
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */12 * * *"  # twice per day
+    - cron: "0 */12 * * *" # مرتين يوميًا
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -20,13 +21,16 @@ jobs:
       - name: Install dependencies
         run: pip install markdown
 
-      - name: Run generator
-        run: python generate.py
+      - name: Generate Post
+        run: python content-engine/generator.py
+
+      - name: Build Posts Index
+        run: python content-engine/build_index.py
 
       - name: Commit & Push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Auto-generated blog posts" || echo "Nothing to commit"
+          git commit -m "✅ Auto post + index refresh" || echo "Nothing to commit"
           git push
