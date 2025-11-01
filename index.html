@@ -24,21 +24,26 @@ h2 { font-size: 18px; margin: 0 0 4px 0; }
 
 <script>
 async function loadPosts() {
-    const response = await fetch("https://api.github.com/repos/knowledgehubs/knowledge-hub-ai/contents/posts");
-    const files = await response.json();
-    const postsDiv = document.getElementById("posts");
+    const postsList = document.getElementById("posts-list");
+    const response = await fetch("posts/");
+    const text = await response.text();
 
-    files.reverse().forEach(file => {
-        const title = file.name.replace(".md", "").replace(/-/g, " ");
-        const postHtml = `
-        <div class="post-card">
-            <h2><a href="posts/${file.name}">${title}</a></h2>
-        </div>`;
-        postsDiv.innerHTML += postHtml;
+    // استخراج أسماء ملفات .md
+    const files = [...text.matchAll(/href="([^"]+\.md)"/g)].map(m => m[1]);
+
+    files.forEach(file => {
+        const link = document.createElement("a");
+        link.href = `post.html?file=posts/${file}`;
+        link.textContent = file.replace(".md", "").replace(/-/g, " ");
+        link.style.display = "block";
+        link.style.marginBottom = "10px";
+        postsList.appendChild(link);
     });
 }
+
 loadPosts();
 </script>
+
 
 </body>
 </html>
