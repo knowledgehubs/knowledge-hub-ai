@@ -5,21 +5,27 @@ keywords_dir = "content-engine/keywords/"
 blocks_dir = "blocks/"
 posts_dir = "posts/"
 
-# Load blocks
-def load_blocks(folder):
-    path = os.path.join(blocks_dir, folder)
-    return [open(os.path.join(path, f)).read() for f in os.listdir(path) if f.endswith(".txt")]
+# Load blocks file (each line or paragraph = 1 block)
+def load_blocks(file_name):
+    file_path = os.path.join(blocks_dir, file_name)
+    if not os.path.exists(file_path):
+        print(f"⚠️ Missing block file: {file_name}")
+        return []
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read().strip()
+    # Split by double newline or newline
+    return [p.strip() for p in content.split("\n\n") if p.strip()]
 
 blocks = {
-    "openings": load_blocks("openings"),
-    "introductions": load_blocks("introductions"),
-    "explanations": load_blocks("explanations"),
-    "advantages": load_blocks("advantages"),
-    "limitations": load_blocks("limitations"),
-    "steps": load_blocks("steps"),
-    "comparisons": load_blocks("comparisons"),
-    "tips": load_blocks("tips"),
-    "cta": load_blocks("cta"),
+    "openings": load_blocks("hooks.txt"),
+    "introductions": load_blocks("intros.txt"),
+    "explanations": load_blocks("explanations.txt"),
+    "advantages": load_blocks("pros.txt"),
+    "limitations": load_blocks("cons.txt"),
+    "steps": load_blocks("steps.txt"),
+    "comparisons": load_blocks("comparisons.txt"),
+    "tips": load_blocks("tips.txt"),
+    "cta": load_blocks("cta.txt"),
 }
 
 # Generate post
@@ -57,11 +63,10 @@ def generate_post(keyword):
 
     filename = f"{today}-{slug}.md"
     filepath = os.path.join(posts_dir, filename)
-    with open(filepath, "w") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
 
     print(f"✅ Generated: {filepath}")
-
 
 # Process one keyword only each run
 files = sorted([f for f in os.listdir(keywords_dir) if f.endswith(".md")])
@@ -70,7 +75,7 @@ if not files:
     exit()
 
 file = files[0]
-keyword = open(os.path.join(keywords_dir, file)).read().replace("keyword:", "").strip()
+keyword = open(os.path.join(keywords_dir, file), encoding="utf-8").read().replace("keyword:", "").strip()
 
 generate_post(keyword)
 
