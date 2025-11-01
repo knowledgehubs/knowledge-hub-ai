@@ -3,6 +3,18 @@
 
 <url>
   <loc>https://knowledgehubs.github.io/knowledge-hub-ai/</loc>
+  <changefreq>daily</changefreq>
+  <priority>1.0</priority>
 </url>
+
+{% for file in site.static_files %}
+{% if file.path contains '/posts/' and file.extname == '.md' %}
+<url>
+  <loc>https://knowledgehubs.github.io/knowledge-hub-ai{{ file.path }}</loc>
+  <changefreq>daily</changefreq>
+  <priority>0.8</priority>
+</url>
+{% endif %}
+{% endfor %}
 
 </urlset>
