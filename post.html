@@ -1,60 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Article</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Knowledge Hub – Article</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-body { 
-    font-family: "Georgia", serif; 
-    margin: 0; 
-    padding: 0; 
-    line-height: 1.75; 
-    background: #fafafa; 
-    color: #222; 
+:root {
+  --text: #222;
+  --bg: #ffffff;
+  --primary: #1a73e8;
+  --gray: #666;
+  --border: #e3e7ea;
 }
-header { 
-    background: #111; 
-    color: #fff; 
-    padding: 20px; 
-    text-align: center; 
-    font-size: 22px; 
-    font-weight: bold; 
-}
-.container {
-    max-width: 850px;
-    margin: auto;
-    padding: 30px 20px;
-    background: #fff;
-    box-shadow: 0px 2px 8px rgba(0,0,0,0.05);
-    margin-top: 25px;
-}
-h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
-h2 { font-size: 26px; margin-top: 30px; font-weight: bold; border-left: 4px solid #1a73e8; padding-left: 10px; }
-h3 { font-size: 20px; margin-top: 24px; font-weight: bold; }
-p { margin: 14px 0; }
-ul { padding-left: 22px; }
-blockquote {
-    border-left: 4px solid #1a73e8;
-    margin: 20px 0;
-    padding: 10px 15px;
-    background: #f4f8ff;
-    font-style: italic;
-}
-code { background: #eee; padding: 2px 5px; border-radius: 4px; }
-a { color: #1a73e8; text-decoration: none; }
-.back-link { display: block; margin-top: 30px; font-size: 16px; color: #000; }
 
-.meta-box {
-    color: #555;
-    font-size: 14px;
-    margin-bottom: 12px;
+body {
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
 }
-.separator {
-    height: 1px;
-    background: #ddd;
-    margin: 22px 0;
+
+header {
+  background: #0d1117;
+  color: #fff;
+  padding: 24px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+  display: flex;
+  gap: 40px;
+}
+
+article {
+  flex: 3;
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+.sidebar {
+  flex: 1;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+}
+
+.sidebar-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+h2, h3 {
+  font-weight: 600;
+  margin-top: 28px;
+}
+
+p, li {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+.meta {
+  color: var(--gray);
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+.button {
+  display: block;
+  background: var(--primary);
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 10px;
+  font-weight: 600;
 }
 </style>
 </head>
@@ -63,35 +113,59 @@ a { color: #1a73e8; text-decoration: none; }
 <header>Knowledge Hub 📘</header>
 
 <div class="container">
-    <div class="meta-box" id="post-meta"></div>
-    <h1 id="post-title">Loading...</h1>
-    <div id="post-content">Loading article...</div>
-    <a class="back-link" href="index.html">← Back to Home</a>
+  <article>
+    <div class="meta" id="meta"></div>
+    <div id="content">Loading...</div>
+  </article>
+
+  <div class="sidebar">
+    <div class="sidebar-box">
+      <h3>About the Author</h3>
+      <p>We help you learn, grow, and build your digital future.</p>
+    </div>
+
+    <div class="sidebar-box">
+      <h3>More Guides</h3>
+      <div id="related-posts"></div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-function readingTime(text) {
-    const words = text.split(/\s+/).length;
-    return Math.ceil(words / 200); // avg reading speed
+async function loadPost() {
+  const params = new URLSearchParams(window.location.search);
+  const file = params.get("file");
+  const response = await fetch(file);
+  const text = await response.text();
+
+  document.getElementById("content").innerHTML = marked.parse(text);
+
+  const filename = file.split("/").pop().replace(".md", "");
+  const date = filename.split("-").slice(0, 3).join("-");
+
+  document.getElementById("meta").textContent =
+    `📅 Published: ${date} • ⏱️ Reading time: ~4 min`;
 }
 
-async function loadPost() {
-    const params = new URLSearchParams(window.location.search);
-    const file = params.get("file");
+async function loadRelated() {
+  const response = await fetch("posts/");
+  const text = await response.text();
+  const files = [...text.matchAll(/href="([^"]+\.md)"/g)].map(m => m[1]).slice(0,5);
 
-    const response = await fetch(file);
-    const text = await response.text();
-
-    const title = text.split("\n")[0].replace("#", "").trim();
-    const minutes = readingTime(text);
-
-    document.getElementById("post-title").innerText = title;
-    document.getElementById("post-meta").innerText = `⏱️ ${minutes} min read`;
-    document.getElementById("post-content").innerHTML = marked.parse(text);
+  const box = document.getElementById("related-posts");
+  files.forEach(f => {
+    const link = document.createElement("a");
+    link.href = `post.html?file=posts/${f}`;
+    link.textContent = f.replace(".md", "").replace(/-/g, " ");
+    link.style.display = "block";
+    link.style.marginBottom = "8px";
+    box.appendChild(link);
+  });
 }
 
 loadPost();
+loadRelated();
 </script>
 
 </body>
