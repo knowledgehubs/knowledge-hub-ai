@@ -38,32 +38,33 @@ h1{margin-bottom:14px;}
 
 </div>
 
-<script>
-async function loadPosts() {
-  const res = await fetch("posts.json");
-  const data = await res.json();
-  const posts = data.posts;
+<script>async function loadPosts() {
+    const postsList = document.getElementById("posts");
 
-  const container = document.getElementById("posts");
+    const res = await fetch("sitemap.xml");
+    const xml = await res.text();
 
-  function render(list){
-    container.innerHTML = list.map(p=>`
-      <div class="post">
-        <a href="post.html?file=posts/${p.slug}">${p.title}</a>
-        <div class="meta">${new Date(p.date).toLocaleDateString()}</div>
-      </div>
-    `).join('');
-  }
+    const files = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)]
+        .map(x => x[1])
+        .filter(link => link.includes("/posts/"));
 
-  render(posts);
+    files.forEach(link => {
+        const file = link.split("/").pop();
+        const title = file
+            .replace(/^\d{4}-\d{2}-\d{2}-/, "")
+            .replace(".md", "")
+            .replace(/-/g, " ");
 
-  document.getElementById("searchInput").addEventListener("input", e => {
-    const q = e.target.value.toLowerCase();
-    const filtered = posts.filter(p => p.title.toLowerCase().includes(q));
-    render(filtered);
-  });
+        const a = document.createElement("a");
+        a.href = `post.html?file=posts/${file}`;
+        a.className = "post-card";
+        a.textContent = title;
+        postsList.appendChild(a);
+    });
 }
+
 loadPosts();
+
 </script>
 
 </body>
