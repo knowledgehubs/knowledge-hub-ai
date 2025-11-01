@@ -20,12 +20,16 @@ code { background: #eee; padding: 2px 5px; border-radius: 4px; }
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 async function loadPost() {
-    const file = window.location.pathname.split("/").pop();
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get("file");
+
     const response = await fetch(file);
     const text = await response.text();
+
     document.getElementById("content").innerHTML = marked.parse(text);
 }
 loadPost();
 </script>
+
 </body>
 </html>
