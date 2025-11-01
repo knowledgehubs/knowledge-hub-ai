@@ -1,36 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Knowledge Hub — Latest Articles</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body { font-family: "Inter", sans-serif; padding: 0; margin: 0; background: #fafafa; color:#111; }
+header { background: #111; color: #fff; padding: 20px; text-align: center; font-size: 22px; font-weight: 700; }
+.container { max-width: 900px; margin: 20px auto; padding: 20px; }
+input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px; font-size:16px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+.card { background:#fff; border:1px solid #eee; border-radius:10px; padding:15px; transition:0.2s; }
+.card:hover { background:#f8f9ff; border-color:#cbd5ff; }
+.card a { text-decoration:none; color:#111; font-weight:600; font-size:18px; display:block; margin-bottom:6px; }
+.card small { color:#666; font-size:13px; }
+</style>
+</head>
+<body>
+
+<header>Knowledge Hub 📘 Explore. Learn. Grow.</header>
+
+<div class="container">
+    <input id="searchBox" placeholder="Search articles..." />
+
+    <div id="posts" class="grid"></div>
+
+    <div id="empty" style="display:none; text-align:center; padding:30px; color:#777;">
+        No articles found.
+    </div>
+</div>
+
 <script>
 async function loadPosts() {
     try {
-        const res = await fetch("./posts/index.json");
+        const res = await fetch("index.json");
         const files = await res.json();
 
         window.allPosts = files.map(f => {
+            const name = f.replace(".md", "").replace(/-/g, " ");
             const date = f.slice(0,10);
-            const title = f
-                .replace(".md", "")
-                .replace(/^\d{4}-\d{2}-\d{2}-/, "")
-                .replace(/-/g, " ");
-
+            const title = name.replace(/^\d{4} \d{2} \d{2} /, "");
             return { file:f, title:title, date:date };
         }).reverse();
 
         renderPosts(window.allPosts);
-    } catch(e) {
-        document.getElementById("empty").innerText = "Error loading posts.";
-        console.error(e);
+    } catch (e) {
+        console.error("Error loading posts index:", e);
     }
 }
 
 function renderPosts(list) {
     const container = document.getElementById("posts");
     const empty = document.getElementById("empty");
+    if (!container) return;
+
     container.innerHTML = "";
 
-    if(list.length === 0){
-        empty.style.display = "block";
+    if (list.length === 0) {
+        if(empty) empty.style.display = "block";
         return;
     }
-    empty.style.display = "none";
+
+    if(empty) empty.style.display = "none";
 
     list.forEach(p => {
         container.innerHTML += `
@@ -42,11 +76,18 @@ function renderPosts(list) {
     });
 }
 
-document.getElementById("searchBox").addEventListener("input", e => {
-    const q = e.target.value.toLowerCase();
-    const results = window.allPosts.filter(p => p.title.toLowerCase().includes(q));
-    renderPosts(results);
-});
+// ✅ safe search binding
+const searchInput = document.getElementById("searchBox");
+if (searchInput) {
+    searchInput.addEventListener("input", e => {
+        const q = e.target.value.toLowerCase();
+        const results = window.allPosts.filter(p => p.title.toLowerCase().includes(q));
+        renderPosts(results);
+    });
+}
 
 loadPosts();
 </script>
+
+</body>
+</html>
