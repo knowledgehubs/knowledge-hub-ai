@@ -39,20 +39,9 @@ body{font-family:"Inter",system-ui,Arial;background:#fff;margin:0;color:#0f1724}
     <div class="meta" id="metaRow">
       <div class="pill" id="dateP">—</div>
       <div class="pill" id="readTime">—</div>
-      <div id="tags" style="color:var(--muted);font-size:13px"></div>
     </div>
 
     <div id="content" class="content">…</div>
-
-    <div id="ctaZone" class="ctaBox" style="display:none">
-      <div class="left">
-        <div style="font-weight:700" id="ctaTitle">Special offer</div>
-        <div style="color:var(--muted);font-size:14px" id="ctaDesc">Click to see details.</div>
-      </div>
-      <div>
-        <a id="ctaLink" class="ctaBtn" href="#" target="_blank" rel="noopener sponsored">Get it</a>
-      </div>
-    </div>
 
     <hr />
     <div style="color:var(--muted);font-size:14px">You may also like</div>
@@ -62,49 +51,36 @@ body{font-family:"Inter",system-ui,Arial;background:#fff;margin:0;color:#0f1724}
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-function qs(selector){return document.querySelector(selector)}
-function calcReadTime(text){ const words = (text||'').trim().split(/\s+/).length; return Math.max(1, Math.round(words / 200)); }
-
 (async function(){
-  const prefix = "/knowledge-hub-ai/";
   const params = new URLSearchParams(window.location.search);
   const fileParam = params.get('file');
-  if(!fileParam){ qs('#post-title').textContent = 'No file specified'; return; }
-  try{
-    const res = await fetch(prefix + fileParam);
-    if(!res.ok) { qs('#post-title').textContent='Post not found'; return; }
-    const md = await res.text();
 
-    qs('#content').innerHTML = marked.parse(md);
-
-    const titleMatch = md.match(/^#\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1].trim() : fileParam.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
-    qs('#post-title').textContent = title;
-
-    const fname = fileParam.split('/').pop();
-    const datePart = fname.slice(0,10);
-    qs('#dateP').textContent = new Date(datePart).toLocaleDateString();
-    const plain = md.replace(/^#.*$/mg,'').replace(/```[\s\S]*?```/g,'');
-    qs('#readTime').textContent = calcReadTime(plain) + ' min read';
-
-    const listing = await (await fetch(prefix + "posts/")).text();
-    const files = [...listing.matchAll(/href="([^"]+\.md)"/g)].map(m=>m[1]);
-    const current = fname;
-    const firstWord = title.split(' ')[0].toLowerCase();
-    const related = files.filter(f=>{
-      const t = f.replace(/^\d{4}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
-      return f!==current && t.toLowerCase().includes(firstWord);
-    }).slice(0,6);
-
-    qs('#suggestions').innerHTML = related.map(s=>{
-      const title = s.replace(/^\d{4}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
-      return `<a href="post.html?file=posts/${encodeURIComponent(s)}">${title}</a>`;
-    }).join('');
-
-  }catch(e){
-    console.error(e);
-    qs('#post-title').textContent = 'Error loading post';
+  if(!fileParam){
+    document.querySelector('#post-title').textContent = 'No post specified';
+    return;
   }
+
+  const res = await fetch("./" + fileParam);
+  const md = await res.text();
+
+  document.querySelector('#content').innerHTML = marked.parse(md);
+
+  const titleMatch = md.match(/^#\s+(.+)$/m);
+  const title = titleMatch ? titleMatch[1] : fileParam.split('/').pop();
+  document.querySelector('#post-title').textContent = title;
+
+  const datePart = fileParam.split('/').pop().slice(0,10);
+  document.querySelector('#dateP').textContent = new Date(datePart).toLocaleDateString();
+
+  const plain = md.replace(/^#.*$/mg,'');
+  document.querySelector('#readTime').textContent = Math.ceil(plain.split(/\s+/).length / 200) + " min read";
+
+  const list = await (await fetch("./posts/index.json")).json();
+  const suggestions = list.filter(f => f !== fileParam.split('/').pop()).slice(0,6);
+
+  document.querySelector('#suggestions').innerHTML = suggestions.map(f =>
+    `<a href="post.html?file=posts/${f}">${f.replace(/\.md$/,'').replace(/-/g,' ').slice(11)}</a>`
+  ).join('');
 })();
 </script>
 </body>
