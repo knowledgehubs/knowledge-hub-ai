@@ -1,0 +1,34 @@
+name: Auto Generate Posts
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # يعمل كل يوم الساعة 6 صباحاً UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      - name: Generate posts
+        run: |
+          pip install --no-input
+          python scripts/generate_posts.py
+
+      - name: Push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Auto-generated blog posts" || echo "No changes"
+          git push
