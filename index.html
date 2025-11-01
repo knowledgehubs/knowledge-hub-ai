@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Hub – Learn. Grow. Build Your Future.</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #222; }
+header { background: #111; color: #fff; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; }
+section { padding: 20px; max-width: 900px; margin: auto; }
+a { text-decoration: none; color: #1a73e8; }
+.post-card { padding: 12px; border-bottom: 1px solid #ddd; }
+.post-card:hover { background: #f7f7f7; }
+h2 { font-size: 18px; margin: 0 0 4px 0; }
+</style>
+</head>
+<body>
+<header>Knowledge Hub 📘 Explore. Learn. Grow.</header>
+
+<section>
+<h1>Latest Articles</h1>
+<div id="posts"></div>
+</section>
+
+<script>
+async function loadPosts() {
+    const response = await fetch("https://api.github.com/repos/knowledgehubs/knowledge-hub-ai/contents/posts");
+    const files = await response.json();
+    const postsDiv = document.getElementById("posts");
+
+    files.reverse().forEach(file => {
+        const title = file.name.replace(".md", "").replace(/-/g, " ");
+        const postHtml = `
+        <div class="post-card">
+            <h2><a href="posts/${file.name}">${title}</a></h2>
+        </div>`;
+        postsDiv.innerHTML += postHtml;
+    });
+}
+loadPosts();
+</script>
+
+</body>
+</html>
