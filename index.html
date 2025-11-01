@@ -38,8 +38,9 @@ input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; marg
 
 <script>
 async function loadPosts() {
+  const prefix = "/knowledge-hub-ai/";
   try {
-      const res = await fetch("posts/index.json");
+      const res = await fetch(prefix + "posts/index.json");
       const files = await res.json();
 
       window.allPosts = files.map(f => {
