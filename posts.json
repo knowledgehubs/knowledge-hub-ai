@@ -1,3 +1,69 @@
-{
-  "posts": []
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Hub — Learn. Grow.</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body { margin: 0; font-family: Inter, sans-serif; background:#fff; color:#111; }
+header { background:#111; color:#fff; padding:18px; text-align:center; font-size:20px; font-weight:700; }
+.container { max-width:900px; margin:auto; padding:20px; }
+.searchBox input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:15px; margin-bottom:20px;}
+.post { padding:14px; border-bottom:1px solid #eee; }
+.post a { text-decoration:none; font-weight:600; color:#0a58ff; font-size:18px; }
+.date { color:#777; font-size:13px; margin-top:4px; }
+.no-results { padding:20px; color:#666; text-align:center; }
+</style>
+</head>
+
+<body>
+<header>Knowledge Hub 📘 Learn Something New Daily</header>
+
+<div class="container">
+
+<div class="searchBox">
+<input type="text" id="search" placeholder="Search articles...">
+</div>
+
+<div id="list"></div>
+
+</div>
+
+<script>
+let posts = [];
+
+async function loadFeed() {
+  const res = await fetch("posts.json");
+  const data = await res.json();
+  posts = data.posts;
+  render(posts);
 }
+
+function render(items) {
+  const list = document.getElementById("list");
+  if (!items.length) {
+    list.innerHTML = '<div class="no-results">No matching articles</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(p => `
+    <div class="post">
+      <a href="post.html?file=posts/${encodeURIComponent(p.slug)}">${p.title}</a>
+      <div class="date">${new Date(p.date).toLocaleDateString()}</div>
+    </div>
+  `).join("");
+}
+
+document.getElementById("search").addEventListener("input", e => {
+  const q = e.target.value.toLowerCase();
+  const filtered = posts.filter(p => p.title.toLowerCase().includes(q));
+  render(filtered);
+});
+
+loadFeed();
+</script>
+</body>
+</html>
