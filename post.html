@@ -68,29 +68,25 @@ hr{border:none;border-top:1px solid #eef2f6;margin:18px 0}
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-/* Helpers */
-function qs(selector){return document.querySelector(selector)}
+function qs(s){return document.querySelector(s)}
 function calcReadTime(text){ const words = (text||'').trim().split(/\s+/).length; return Math.max(1, Math.round(words / 200)); }
 
-/* Load requested file */
 (async function(){
   const params = new URLSearchParams(window.location.search);
   const fileParam = params.get('file');
   if(!fileParam){ qs('#post-title').textContent = 'No file specified'; return; }
+
   try{
     const res = await fetch(fileParam);
     if(!res.ok) { qs('#post-title').textContent='Post not found'; return; }
     const md = await res.text();
-    // Very simple front-matter detection for date/title (if you use plain md)
-    // Render
     qs('#content').innerHTML = marked.parse(md);
 
-    // Title detection: if md starts with "# Title"
     const titleMatch = md.match(/^#\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1].trim() : fileParam.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
+    const title = titleMatch ? titleMatch[1].trim() : 
+      fileParam.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
     qs('#post-title').textContent = title;
 
-    // Date: filename start YYYY-MM-DD
     const fname = fileParam.split('/').pop();
     const datePart = fname.slice(0,10);
     qs('#dateP').textContent = new Date(datePart).toLocaleDateString();
@@ -98,12 +94,9 @@ function calcReadTime(text){ const words = (text||'').trim().split(/\s+/).length
     const plain = md.replace(/^#.*$/mg,'').replace(/```[\s\S]*?```/g,'');
     qs('#readTime').textContent = calcReadTime(plain) + ' min read';
 
-    // Insert a CTA automatically from mapping: if the MD contains {AFFILIATE:KEYWORD} pattern we can replace
     const affMatch = md.match(/\{AFFILIATE\:([^\}\n]+)\}/i);
     if(affMatch){
-      // placeholder logic — later hook to Redirect Sheet data map
       const offerKey = affMatch[1].trim();
-      // Example: transform offerKey -> affiliate link (admin must replace)
       const demoLink = `https://example.com/offer/${encodeURIComponent(offerKey)}`;
       qs('#ctaTitle').textContent = 'Recommended — ' + offerKey;
       qs('#ctaDesc').textContent = 'Top pick based on article topic. Safe & tested.';
@@ -111,15 +104,22 @@ function calcReadTime(text){ const words = (text||'').trim().split(/\s+/).length
       qs('#ctaZone').style.display = 'flex';
     }
 
-    // Suggestions: list other posts (simple approach)
-    const listing = await (await fetch('posts/')).text();
-    const files = [...listing.matchAll(/href="([^"]+\.md)"/g)].map(m=>m[1]);
-    const suggestions = files.filter(f=>f!==fileParam.split('/').pop()).slice(0,6);
-    const sugBox = qs('#suggestions');
-    sugBox.innerHTML = suggestions.map(s=>{
-      const title = s.replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
-      return `<a href="post.html?file=posts/${encodeURIComponent(s)}" style="text-decoration:none">${title}</a>`;
+    /* ✅ Load suggestions from sitemap.xml */
+    const sitemap = await (await fetch("sitemap.xml")).text();
+    const allPosts = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)]
+      .map(x => x[1])
+      .filter(link => link.includes("/posts/"))
+      .map(link => link.split("/").pop());
+
+    const suggestions = allPosts
+      .filter(f => f !== fname)
+      .slice(0,6);
+
+    qs("#suggestions").innerHTML = suggestions.map(s=>{
+      const t = s.replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.md$/,'').replace(/-/g,' ');
+      return `<a href="post.html?file=posts/${s}">${t}</a>`;
     }).join('');
+
   }catch(e){
     console.error(e);
     qs('#post-title').textContent = 'Error loading post';
