@@ -1,9 +1,10 @@
-import os, random, datetime
+import os, random, datetime, json
 
 # Paths
 keywords_dir = "content-engine/keywords/"
 blocks_dir = "blocks/"
 posts_dir = "posts/"
+feed_file = "posts.json"
 
 # Load blocks file (each line or paragraph = 1 block)
 def load_blocks(file_name):
@@ -13,7 +14,6 @@ def load_blocks(file_name):
         return []
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read().strip()
-    # Split by double newline or newline
     return [p.strip() for p in content.split("\n\n") if p.strip()]
 
 blocks = {
@@ -28,7 +28,7 @@ blocks = {
     "cta": load_blocks("cta.txt"),
 }
 
-# Generate post
+# Generate one post
 def generate_post(keyword):
     today = datetime.date.today().isoformat()
     slug = keyword.replace(" ", "-")
@@ -41,19 +41,19 @@ def generate_post(keyword):
 
 {random.choice(blocks['explanations'])}
 
-### Benefits
+### ✅ Benefits
 {random.choice(blocks['advantages'])}
 
-### Challenges
+### ⚠️ Challenges
 {random.choice(blocks['limitations'])}
 
-### Step-by-step guide
+### 🪜 Step-by-step guide
 {random.choice(blocks['steps'])}
 
-### Comparison
+### 🔎 Comparison
 {random.choice(blocks['comparisons'])}
 
-### Practical Tips
+### 💡 Practical Tips
 {random.choice(blocks['tips'])}
 
 ---
@@ -63,12 +63,15 @@ def generate_post(keyword):
 
     filename = f"{today}-{slug}.md"
     filepath = os.path.join(posts_dir, filename)
+
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
 
-    print(f"✅ Generated: {filepath}")
+    print(f"✅ Generated post: {filepath}")
 
-# Process one keyword only each run
+    return filename, today
+
+# ---- Fetch keyword ----
 files = sorted([f for f in os.listdir(keywords_dir) if f.endswith(".md")])
 if not files:
     print("🎉 No keywords left!")
@@ -77,8 +80,29 @@ if not files:
 file = files[0]
 keyword = open(os.path.join(keywords_dir, file), encoding="utf-8").read().replace("keyword:", "").strip()
 
-generate_post(keyword)
+filename, date_today = generate_post(keyword)
 
-# Remove keyword file after use
-os.remove(os.path.join(keywords_dir, file))
-print(f"🗑️ Used & removed: {file}")
+# ---- Update JSON feed ----
+# create file if not exists
+if not os.path.exists(feed_file):
+    with open(feed_file, "w") as f:
+        json.dump({"posts": []}, f)
+
+# load feed
+with open(feed_file, "r") as f:
+    feed = json.load(f)
+
+# add post entry
+feed["posts"].insert(0, {
+    "title": keyword.title(),
+    "slug": filename,
+    "date": date_today
+})
+
+with open(feed_file, "w") as f:
+    json.dump(feed, f, indent=2)
+
+print(f"🆕 Added to feed.json: {filename}")
+
+# keep keyword file (do not delete)
+print(f"📌 Kept keyword for audit: {file}")
